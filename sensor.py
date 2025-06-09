@@ -383,18 +383,19 @@ class CudyRouterSensor(
         if not module_data:
             return None
         data_entry = module_data.get(self.entity_description.key)
-        return data_entry["value"] if data_entry else None
+        return data_entry["value"] if data_entry and "value" in data_entry else None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return the state attributes."""
         if self.coordinator.data:
-            attributes = self.coordinator.data[self.entity_description.module][
-                self.entity_description.key
-            ].get("attributes")
-            if attributes:
-                self._attrs.update(attributes)
-
+            module_data = self.coordinator.data.get(self.entity_description.module)
+            if module_data:
+                data_entry = module_data.get(self.entity_description.key)
+                if data_entry:
+                    attributes = data_entry.get("attributes")
+                    if attributes:
+                        self._attrs.update(attributes)
         return self._attrs
 
 
