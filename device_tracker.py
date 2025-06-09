@@ -44,7 +44,7 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return true if the device is connected."""
         devices = self.coordinator.data.get(MODULE_DEVICES, [])
         for dev in devices:
-            if dev.get("mac") and dev["mac"].lower() == self._mac.lower():
+            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 return dev.get("active", True)
         return False
 
@@ -53,7 +53,6 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
         """Return extra attributes for the device tracker."""
         devices = self.coordinator.data.get(MODULE_DEVICES, [])
         for dev in devices:
-            if dev.get("mac") and dev["mac"].lower() == self._mac.lower():
+            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 return dev.copy()
         return {}
-

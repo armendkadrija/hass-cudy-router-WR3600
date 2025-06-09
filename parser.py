@@ -61,7 +61,7 @@ def parse_speed(input_string: str) -> float:
 
 
 def get_all_devices(input_html: str) -> dict[str, Any]:
-    """Parses an HTML table extracting key-value pairs"""
+    """Parses an HTML table extracting key-value pairs, including signal and online time if present."""
     devices = []
     soup = BeautifulSoup(input_html, "html.parser")
     for br_element in soup.find_all("br"):
@@ -69,11 +69,16 @@ def get_all_devices(input_html: str) -> dict[str, Any]:
     tables = soup.find_all("table")
     for table in tables:
         for row in table.find_all("tr"):
-            ip, mac, up_speed, down_speed, hostname = [None, None, None, None, None]
+            ip, mac, up_speed, down_speed, hostname, signal, online, connection = [None, None, None, None, None, None, None, None]
             cols = row.css.select("td div")
             for col in cols:
                 div_id = col.attrs.get("id")
                 content_element = col.css.select_one("p.visible-xs")
+                # Extract connection type from hostname cell
+                if div_id and div_id.endswith("hostname"):
+                    span = col.css.select_one("span.text-primary")
+                    if span:
+                        connection = span.text.strip()
                 if not div_id or not content_element:
                     continue
                 content = content_element.text.strip()
@@ -84,6 +89,15 @@ def get_all_devices(input_html: str) -> dict[str, Any]:
                         up_speed, down_speed = [x.strip() for x in content.split("\n")]
                     if div_id.endswith("hostname"):
                         hostname = content.split("\n")[0].strip()
+                    if div_id.endswith("signal"):
+                        signal = content.split("\n")[0].strip()
+                    if div_id.endswith("online"):
+                        online = content.split("\n")[0].strip()
+                else:
+                    if div_id and div_id.endswith("signal"):
+                        signal = content
+                    if div_id and div_id.endswith("online"):
+                        online = content
             if mac or ip:
                 devices.append(
                     {
@@ -92,6 +106,9 @@ def get_all_devices(input_html: str) -> dict[str, Any]:
                         "mac": mac,
                         "up_speed": parse_speed(up_speed),
                         "down_speed": parse_speed(down_speed),
+                        "signal": signal,
+                        "online": online,
+                        "connection": connection,
                     }
                 )
 
