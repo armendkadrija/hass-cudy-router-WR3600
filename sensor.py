@@ -246,7 +246,6 @@ DEVICE_SIGNAL_SENSOR = CudyRouterSensorEntityDescription(
     module="devices",
     name_suffix="signal",
     icon="mdi:wifi",
-    state_class=SensorStateClass.MEASUREMENT,
 )
 
 DEVICE_PRESENCE_SENSOR = CudyRouterSensorEntityDescription(
@@ -387,6 +386,10 @@ class CudyRouterDeviceSensor(
             if signal and str(signal).strip() != "" and str(signal).strip() != "---":
                 return "home"
             return "not_home"
+        # For signal sensor, always return as string
+        if self.entity_description.key == "signal":
+            val = device.get("signal")
+            return str(val) if val is not None else None
         return device.get(self.entity_description.key)
 
 
