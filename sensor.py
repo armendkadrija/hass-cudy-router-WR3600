@@ -234,6 +234,28 @@ DEVICE_DOWNLOAD_SENSOR = CudyRouterSensorEntityDescription(
     state_class=SensorStateClass.MEASUREMENT,
 )
 
+DEVICE_ONLINE_SENSOR = CudyRouterSensorEntityDescription(
+    key="online",
+    module="devices",
+    name_suffix="online",
+    icon="mdi:lan-connect",
+)
+
+DEVICE_SIGNAL_SENSOR = CudyRouterSensorEntityDescription(
+    key="signal",
+    module="devices",
+    name_suffix="signal",
+    icon="mdi:wifi",
+    state_class=SensorStateClass.MEASUREMENT,
+)
+
+DEVICE_PRESENCE_SENSOR = CudyRouterSensorEntityDescription(
+    key="presence",
+    module="devices",
+    name_suffix="presence",
+    icon="mdi:account-check",
+)
+
 
 def as_name(input_str: str) -> str:
     """Replaces any non-alphanumeric characters with underscore"""
@@ -293,6 +315,16 @@ async def async_setup_entry(
         entities.append(
             CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_DOWNLOAD_SENSOR)
         )
+        entities.append(
+            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_ONLINE_SENSOR)
+        )
+        entities.append(
+            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_SIGNAL_SENSOR)
+        )
+        # Add presence sensor for each device
+        entities.append(
+            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_PRESENCE_SENSOR)
+        )
 
     async_add_entities(entities)
 
@@ -344,7 +376,18 @@ class CudyRouterDeviceSensor(
             .get(SECTION_DETAILED)
             .get(self.device_key)
         )
-        return device and device.get(self.entity_description.key)
+        if not device:
+            return None
+        # Custom logic for presence sensor
+        if self.entity_description.key == "presence":
+            connection = (device.get("connection") or "").lower()
+            signal = device.get("signal")
+            if connection == "wired":
+                return "home"
+            if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                return "home"
+            return "not_home"
+        return device.get(self.entity_description.key)
 
 
 class CudyRouterSensor(
