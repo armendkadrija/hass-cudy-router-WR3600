@@ -73,3 +73,8 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
             if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 return dev.copy()
         return {}
+
+    async def async_update(self) -> None:
+        """Force update of the entity state and log call."""
+        _LOGGER.warning("[CudyRouterDeviceTracker] async_update called for MAC: %s", self._mac)
+        self.async_write_ha_state()
