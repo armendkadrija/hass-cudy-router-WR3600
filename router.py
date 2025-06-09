@@ -1,11 +1,14 @@
 """Provides the backend for a Cudy router"""
-
+import hashlib
+import time
 from datetime import timedelta
 from typing import Any
 import requests
 import logging
 import urllib.parse
 from http.cookies import SimpleCookie
+
+from bs4 import BeautifulSoup
 
 from .const import MODULE_DEVICES, MODULE_MODEM, OPTIONS_DEVICELIST
 from .parser import parse_devices, parse_modem_info
@@ -45,9 +48,52 @@ class CudyRouter:
     def authenticate(self) -> bool:
         """Test if we can authenticate with the host."""
 
+        login_url = f"http://{self.host}/cgi-bin/luci"
+        try:
+            resp = requests.get(login_url, timeout=10)
+            html = resp.text
+            soup = BeautifulSoup(html, "html.parser")
+
+            def extract(name):
+                tag = soup.find("input", {"name": name})
+                return tag["value"] if tag and tag.has_attr("value") else ""
+
+            _csrf = extract("_csrf")
+            token = extract("token")
+            salt = extract("salt")
+        except Exception as e:
+            _LOGGER.error("Error retrieving login page: %s", e)
+            return False
+
+        zonename = "Europe/Warsaw"
+        timeclock = str(int(time.time()))
+        luci_language = "en"
+        luci_username = self.username
+        plain_password = self.password
+
+        if salt:
+            hashed = hashlib.sha256((plain_password + salt).encode()).hexdigest()
+            if token:
+                hashed = hashlib.sha256((hashed + token).encode()).hexdigest()
+            luci_password = hashed
+        else:
+            luci_password = plain_password
+
+        body = {
+            "_csrf": _csrf,
+            "token": token,
+            "salt": salt,
+            "zonename": zonename,
+            "timeclock": timeclock,
+            "luci_language": luci_language,
+            "luci_username": luci_username,
+            "luci_password": luci_password,
+        }
+        body = {k: v for k, v in body.items() if v}
+
+
         data_url = f"http://{self.host}/cgi-bin/luci"
         headers = {"Content-Type": "application/x-www-form-urlencoded", "Cookie": ""}
-        body = f"luci_username={urllib.parse.quote(self.username)}&luci_password={urllib.parse.quote(self.password)}&luci_language=en"
 
         try:
             response = requests.post(
