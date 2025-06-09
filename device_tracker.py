@@ -38,21 +38,31 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
         self._attr_unique_id = f"cudy_router_{mac.replace(':', '').replace('-', '')}"
         self._attr_name = f"Cudy Device {mac}"
         self._attr_source_type = SourceType.ROUTER
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, coordinator.config_entry.entry_id)},
+            "manufacturer": "Cudy",
+            "name": "Cudy Router",
+        }
 
     @property
     def is_connected(self) -> bool:
         """Return true if the device is connected: Wired or has a valid signal."""
         devices = self.coordinator.data.get(MODULE_DEVICES, [])
+        _LOGGER.warning("[CudyRouterDeviceTracker] Devices in coordinator: %s", devices)
+        _LOGGER.warning("[CudyRouterDeviceTracker] Looking for MAC: %s", self._mac)
         for dev in devices:
+            _LOGGER.warning("[CudyRouterDeviceTracker] Checking device: %s", dev)
             if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
                 connection = dev.get("connection", "").lower()
                 signal = dev.get("signal")
+                _LOGGER.warning("[CudyRouterDeviceTracker] Found device with MAC %s: connection=%s, signal=%s", self._mac, connection, signal)
                 # Connected if Wired, or signal is present and not empty or '---'
                 if connection == "wired":
                     return True
                 if signal and str(signal).strip() != "" and str(signal).strip() != "---":
                     return True
                 return False
+        _LOGGER.warning("[CudyRouterDeviceTracker] Device with MAC %s not found in devices list", self._mac)
         return False
 
     @property
