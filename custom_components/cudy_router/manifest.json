@@ -10,5 +10,6 @@
   "iot_class": "local_polling",
   "requirements": ["beautifulsoup4==4.12.2"],
   "ssdp": [],
-  "zeroconf": []
+  "zeroconf": [],
+  "integration_platforms": ["device_tracker"]
 }
