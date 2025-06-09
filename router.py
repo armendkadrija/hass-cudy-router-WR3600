@@ -147,9 +147,9 @@ class CudyRouter:
 
         data: dict[str, Any] = {}
 
-        data[MODULE_MODEM] = parse_modem_info(
-            f"{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status')}{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status?detail=1')}"
-        )
+        # data[MODULE_MODEM] = parse_modem_info(
+        #     f"{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status')}{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status?detail=1')}"
+        # )
         data[MODULE_DEVICES] = parse_devices(
             await hass.async_add_executor_job(
                 self.get, "admin/network/devices/devlist?detail=1"
