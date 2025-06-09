@@ -403,8 +403,12 @@ class CudyRouterSignalSensor(CudyRouterSensor):
     @callback
     def async_write_ha_state(self) -> None:
         data = self.coordinator.data
-        modem_data = data and data.get(MODULE_MODEM)
-        value = modem_data.get("signal") and modem_data.get("signal").get("value")
+        modem_data = data.get(MODULE_MODEM) if data and MODULE_MODEM in data else None
+        value = None
+        if modem_data and isinstance(modem_data, dict):
+            signal_data = modem_data.get("signal")
+            if signal_data and isinstance(signal_data, dict):
+                value = signal_data.get("value")
         icon = "mdi:network-strength-outline"
         if not value:
             icon = "mdi:network-strength-off-outline"
