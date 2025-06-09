@@ -14,6 +14,7 @@ from .const import MODULE_DEVICES, MODULE_MODEM, OPTIONS_DEVICELIST
 from .parser import parse_devices, parse_modem_info
 
 from homeassistant.core import HomeAssistant
+import homeassistant.util.dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,7 +66,8 @@ class CudyRouter:
             _LOGGER.error("Error retrieving login page: %s", e)
             return False
 
-        zonename = "Europe/Warsaw"
+
+        zonename = str(dt_util.DEFAULT_TIME_ZONE)
         timeclock = str(int(time.time()))
         luci_language = "en"
         luci_username = self.username
