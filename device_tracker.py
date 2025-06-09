@@ -43,6 +43,8 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
             "manufacturer": "Cudy",
             "name": "Cudy Router",
         }
+        self._attr_should_poll = False  # Explicitly tell HA not to poll
+        self._attr_available = True     # Mark entity as available by default
 
     @property
     def is_connected(self) -> bool:
