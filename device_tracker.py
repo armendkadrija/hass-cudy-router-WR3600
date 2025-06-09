@@ -41,11 +41,18 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
 
     @property
     def is_connected(self) -> bool:
-        """Return true if the device is connected."""
+        """Return true if the device is connected: Wired or has a valid signal."""
         devices = self.coordinator.data.get(MODULE_DEVICES, [])
         for dev in devices:
             if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._mac.lower():
-                return dev.get("active", True)
+                connection = dev.get("connection", "").lower()
+                signal = dev.get("signal")
+                # Connected if Wired, or signal is present and not empty or '---'
+                if connection == "wired":
+                    return True
+                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                    return True
+                return False
         return False
 
     @property
