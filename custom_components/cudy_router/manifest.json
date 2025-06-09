@@ -6,7 +6,7 @@
   "dependencies": [],
   "documentation": "https://github.com/mario910/hass-cudy-router-m3000",
   "homekit": {},
-  "version": "0.2.0",
+  "version": "2025.06.09",
   "iot_class": "local_polling",
   "requirements": ["beautifulsoup4==4.12.2"],
   "ssdp": [],
