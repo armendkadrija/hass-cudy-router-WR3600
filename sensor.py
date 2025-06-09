@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import re
+from datetime import datetime
 from typing import Any
 
 from .const import (
@@ -377,14 +378,17 @@ class CudyRouterDeviceSensor(
         )
         if not device:
             return None
-        # Custom logic for presence sensor
+        # Custom logic for presence sensor with last_seen timeout
         if self.entity_description.key == "presence":
-            connection = (device.get("connection") or "").lower()
-            signal = device.get("signal")
-            if connection == "wired":
-                return "home"
-            if signal and str(signal).strip() != "" and str(signal).strip() != "---":
-                return "home"
+            last_seen = device.get("last_seen")
+            now_ts = datetime.now().timestamp()
+            if last_seen and (now_ts - last_seen) <= 180:
+                connection = (device.get("connection") or "").lower()
+                signal = device.get("signal")
+                if connection == "wired":
+                    return "home"
+                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                    return "home"
             return "not_home"
         # For signal sensor, always return as string
         if self.entity_description.key == "signal":

@@ -206,9 +206,8 @@ def get_seconds_duration(raw_duration: str) -> int:
     return (datetime.now() - (datetime.now() - duration)).total_seconds()
 
 
-def parse_devices(input_html: str, device_list_str: str) -> dict[str, Any]:
-    """Parses devices page"""
-
+def parse_devices(input_html: str, device_list_str: str, previous_devices: dict[str, Any] = None) -> dict[str, Any]:
+    """Parses devices page and tracks last_seen timestamps for each device."""
     devices = get_all_devices(input_html)
     data = {"device_count": {"value": len(devices)}}
     if devices:
@@ -223,12 +222,23 @@ def parse_devices(input_html: str, device_list_str: str) -> dict[str, Any]:
 
         data[SECTION_DETAILED] = {}
         device_list = [x.strip() for x in (device_list_str or "").split(",")]
+        now_ts = datetime.now().timestamp()
+        previous_detailed = (previous_devices or {}).get(SECTION_DETAILED, {}) if previous_devices else {}
         for device in devices:
-            if device.get("mac") in device_list:
-                data[SECTION_DETAILED][device.get("mac")] = device
-            if device.get("hostname") in device_list:
-                data[SECTION_DETAILED][device.get("hostname")] = device
-
+            key = device.get("mac") if device.get("mac") in device_list else device.get("hostname")
+            if key in device_list:
+                # If device was present before, keep its last_seen if not present now
+                prev = previous_detailed.get(key, {})
+                # If device is present in this scan, update last_seen
+                device["last_seen"] = now_ts
+                # If previous last_seen exists and is more recent, keep it (shouldn't happen, but safe)
+                if prev.get("last_seen") and prev["last_seen"] > device["last_seen"]:
+                    device["last_seen"] = prev["last_seen"]
+                data[SECTION_DETAILED][key] = device
+        # For tracked devices not present in this scan, keep their last_seen from previous
+        for key in device_list:
+            if key not in data[SECTION_DETAILED] and key in previous_detailed:
+                data[SECTION_DETAILED][key] = previous_detailed[key]
         data["total_down_speed"] = {
             "value": sum(device.get("down_speed") for device in devices) or 0.0
         }
