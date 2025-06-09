@@ -20,7 +20,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 
 from .router import CudyRouter
-from .const import DOMAIN, OPTIONS_DEVICELIST
+from .const import DOMAIN, OPTIONS_DEVICELIST, OPTIONS_PRESENCE_TIMEOUT, OPTIONS_PRESENCE_SIGNAL_CHECK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,9 +105,15 @@ class CudyRouterOptionsFlowHandler(config_entries.OptionsFlow):
             logging.debug("user_input: %s", user_input)
             device_list = user_input.get(OPTIONS_DEVICELIST) or ""
             scan_interval = user_input.get(CONF_SCAN_INTERVAL) or 15
+            presence_timeout = user_input.get(OPTIONS_PRESENCE_TIMEOUT) or 180
+            presence_signal_check = user_input.get(OPTIONS_PRESENCE_SIGNAL_CHECK)
+            if presence_signal_check is None:
+                presence_signal_check = True
 
             options[OPTIONS_DEVICELIST] = device_list
             options[CONF_SCAN_INTERVAL] = scan_interval
+            options[OPTIONS_PRESENCE_TIMEOUT] = presence_timeout
+            options[OPTIONS_PRESENCE_SIGNAL_CHECK] = presence_signal_check
 
             # Save if there's no errors, else fall through and show the form again
             if not errors:
@@ -133,6 +139,22 @@ class CudyRouterOptionsFlowHandler(config_entries.OptionsFlow):
                             step=5,
                         ),
                     ),
+                    vol.Optional(
+                        OPTIONS_PRESENCE_TIMEOUT,
+                        default=options.get(OPTIONS_PRESENCE_TIMEOUT, 180),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            mode=selector.NumberSelectorMode.BOX,
+                            unit_of_measurement="seconds",
+                            min=30,
+                            max=3600,
+                            step=10,
+                        ),
+                    ),
+                    vol.Optional(
+                        OPTIONS_PRESENCE_SIGNAL_CHECK,
+                        default=options.get(OPTIONS_PRESENCE_SIGNAL_CHECK, True),
+                    ): bool,
                 }
             ),
             errors=errors,

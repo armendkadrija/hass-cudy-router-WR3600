@@ -12,6 +12,8 @@ from .const import (
     MODULE_MODEM,
     OPTIONS_DEVICELIST,
     SECTION_DETAILED,
+    OPTIONS_PRESENCE_TIMEOUT,
+    OPTIONS_PRESENCE_SIGNAL_CHECK,
 )
 from .coordinator import CudyRouterDataUpdateCoordinator
 
@@ -321,9 +323,9 @@ async def async_setup_entry(
         entities.append(
             CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_SIGNAL_SENSOR)
         )
-        # Add presence sensor for each device
+        # Use the new presence sensor class for presence
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_PRESENCE_SENSOR)
+            CudyRouterPresenceSensor(coordinator, name, device_id, DEVICE_PRESENCE_SENSOR)
         )
 
     async_add_entities(entities)
@@ -378,23 +380,16 @@ class CudyRouterDeviceSensor(
         )
         if not device:
             return None
-        # Custom logic for presence sensor with last_seen timeout
-        if self.entity_description.key == "presence":
-            last_seen = device.get("last_seen")
-            now_ts = datetime.now().timestamp()
-            if last_seen and (now_ts - last_seen) <= 180:
-                connection = (device.get("connection") or "").lower()
-                signal = device.get("signal")
-                if connection == "wired":
-                    return "home"
-                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
-                    return "home"
-            return "not_home"
         # For signal sensor, always return as string
         if self.entity_description.key == "signal":
             val = device.get("signal")
             return str(val) if val is not None else None
         return device.get(self.entity_description.key)
+
+    @property
+    def icon(self) -> str | None:
+        # Only dynamic for presence, which is now a separate class
+        return self.entity_description.icon
 
 
 class CudyRouterSensor(
@@ -475,3 +470,46 @@ class CudyRouterSignalSensor(CudyRouterSensor):
         self._attr_icon = icon
 
         super().async_write_ha_state()
+
+
+class CudyRouterPresenceSensor(CudyRouterDeviceSensor):
+    """Presence sensor for a device connected to the Cudy Router."""
+    @property
+    def native_value(self) -> StateType:
+        if not self.coordinator.data:
+            return None
+        device = (
+            self.coordinator.data[MODULE_DEVICES]
+            .get(SECTION_DETAILED)
+            .get(self.device_key)
+        )
+        if not device:
+            return None
+        config_entry = getattr(self.coordinator, 'config_entry', None)
+        timeout = 180
+        signal_check = True
+        if config_entry and hasattr(config_entry, 'options'):
+            timeout = int(config_entry.options.get(OPTIONS_PRESENCE_TIMEOUT, 180))
+            signal_check = config_entry.options.get(OPTIONS_PRESENCE_SIGNAL_CHECK, True)
+            if isinstance(signal_check, str):
+                signal_check = signal_check.lower() == "true"
+        last_seen = device.get("last_seen")
+        now_ts = datetime.now().timestamp()
+        if last_seen and (now_ts - last_seen) <= timeout:
+            connection = (device.get("connection") or "").lower()
+            signal = device.get("signal")
+            if connection == "wired":
+                return "home"
+            if signal_check:
+                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                    return "home"
+        return "not_home"
+
+    @property
+    def icon(self) -> str | None:
+        state = self.native_value
+        if state == "home":
+            return "mdi:account-check"
+        if state == "not_home":
+            return "mdi:account-off"
+        return self.entity_description.icon

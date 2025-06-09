@@ -30,7 +30,9 @@
           "scan_interval": "Scan interval",
           "host": "[%key:common::config_flow::data::host%]",
           "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "password": "[%key:common::config_flow::data::password%]",
+          "presence_timeout": "Presence timeout (seconds)",
+          "presence_signal_check": "Use signal for presence (not just wired)"
         }
       }
     },
