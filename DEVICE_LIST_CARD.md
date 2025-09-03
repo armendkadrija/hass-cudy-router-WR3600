@@ -21,6 +21,48 @@ Each device in the list includes:
 - `online_time`: How long the device has been online
 - `connection`: Connection type (wired/wireless)
 
+## ⭐ Recommended: Clean List with Icons
+
+```yaml
+{% set devices = state_attr('sensor.192_168_10_1_connected_devices', 'devices') %}
+{% if devices %}
+{% for device in devices %}
+{% set time_parts = device.online_time.split(':') %}
+{% if time_parts | length >= 2 %}
+  {% set hours = time_parts[0] | int %}
+  {% set minutes = time_parts[1] | int %}
+  {% set time_display = '' %}
+  {% if hours > 0 %}{% set time_display = hours|string + 'h' %}{% endif %}
+  {% if minutes > 0 %}
+    {% if time_display %}{% set time_display = time_display + ' ' %}{% endif %}
+    {% set time_display = time_display + minutes|string + 'm' %}
+  {% endif %}
+  {% if time_display == '' %}{% set time_display = '<1m' %}{% endif %}
+{% else %}
+  {% set time_display = device.online_time %}
+{% endif %}
+{% set connection_lower = device.connection.lower() %}
+{% if 'wired' in connection_lower %}
+  {% set connection_icon = 'mdi:ethernet' %}
+{% elif '2.4' in connection_lower or '2g' in connection_lower %}
+  {% set connection_icon = 'mdi:signal-2g' %}
+{% else %}
+  {% set connection_icon = 'mdi:signal-5g' %}
+{% endif %}
+- <ha-icon icon="{{ connection_icon }}" style="width: 16px; height: 16px;"></ha-icon> **{{ device.hostname }}** ({{ device.ip }}) - {{ time_display }}
+{% endfor %}
+{% else %}
+📵 No devices connected
+{% endif %}
+```
+
+**Features:**
+- ✅ **Sorted by newest connections first** (automatic)
+- ✅ **Material Design Icons**: ethernet, 2G/5G WiFi indicators  
+- ✅ **Clean time format**: 1h 5m, 30m, <1m
+- ✅ **Shows IP addresses** for easy identification
+- ✅ **Responsive and lightweight**
+
 ## Example Card Configurations
 
 ### 1. Simple Entities Card
