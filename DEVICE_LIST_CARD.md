@@ -24,6 +24,8 @@ Each device in the list includes:
 ## ⭐ Recommended: Clean List with Icons
 
 ```yaml
+🌐 Connected Devices ({{ states('sensor.192_168_10_1_connected_devices') }})
+
 {% set devices = state_attr('sensor.192_168_10_1_connected_devices', 'devices') %}
 {% if devices %}
 {% for device in devices %}
@@ -56,12 +58,7 @@ Each device in the list includes:
 {% endif %}
 ```
 
-**Features:**
-- ✅ **Sorted by newest connections first** (automatic)
-- ✅ **Material Design Icons**: ethernet, 2G/5G WiFi indicators  
-- ✅ **Clean time format**: 1h 5m, 30m, <1m
-- ✅ **Shows IP addresses** for easy identification
-- ✅ **Responsive and lightweight**
+
 
 ## Example Card Configurations
 
