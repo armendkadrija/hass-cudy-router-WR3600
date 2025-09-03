@@ -43,6 +43,6 @@ class CudyRouterDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Get the latest data from the router."""
         async with async_timeout.timeout(30):
             try:
-                return await self.api.get_data(self.hass, self.config_entry.options)
+                return await self.api.get_data(self.hass, self.config_entry.options, self.data)
             except Exception as err:
                 raise UpdateFailed from err

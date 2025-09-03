@@ -11,5 +11,5 @@
   "requirements": ["beautifulsoup4==4.12.2"],
   "ssdp": [],
   "zeroconf": [],
-  "integration_platforms": ["device_tracker"]
+  "integration_platforms": ["device_tracker", "sensor"]
 }

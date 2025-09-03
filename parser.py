@@ -210,6 +210,25 @@ def parse_devices(input_html: str, device_list_str: str, previous_devices: dict[
     """Parses devices page and tracks last_seen timestamps for each device."""
     devices = get_all_devices(input_html)
     data = {"device_count": {"value": len(devices)}}
+    
+    # Store all devices for the connected devices sensor
+    all_devices_formatted = []
+    for device in devices:
+        device_info = {
+            "hostname": device.get("hostname", "Unknown"),
+            "ip": device.get("ip", "Unknown"),
+            "mac": device.get("mac", "Unknown"),
+            "upload_speed": device.get("up_speed", 0),
+            "download_speed": device.get("down_speed", 0),
+            "signal": device.get("signal", "---"),
+            "online_time": device.get("online", "---"),
+            "connection": device.get("connection", "Unknown"),
+        }
+        all_devices_formatted.append(device_info)
+    
+    # Store the formatted device list for the connected devices sensor
+    data["connected_devices"] = {"value": len(devices), "all_devices": all_devices_formatted}
+    
     if devices:
         top_download_device = max(devices, key=lambda item: item.get("down_speed"))
         data["top_downloader_speed"] = {"value": top_download_device.get("down_speed")}

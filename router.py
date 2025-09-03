@@ -141,7 +141,7 @@ class CudyRouter:
         return ""
 
     async def get_data(
-        self, hass: HomeAssistant, options: dict[str, Any]
+        self, hass: HomeAssistant, options: dict[str, Any], previous_data: dict[str, Any] = None
     ) -> dict[str, Any]:
         """Retrieves data from the router"""
 
@@ -150,11 +150,13 @@ class CudyRouter:
         # data[MODULE_MODEM] = parse_modem_info(
         #     f"{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status')}{await hass.async_add_executor_job(self.get, 'admin/network/gcom/status?detail=1')}"
         # )
+        previous_devices = previous_data.get(MODULE_DEVICES) if previous_data else None
         data[MODULE_DEVICES] = parse_devices(
             await hass.async_add_executor_job(
                 self.get, "admin/network/devices/devlist?detail=1"
             ),
             options and options.get(OPTIONS_DEVICELIST),
+            previous_devices,
         )
 
         return data

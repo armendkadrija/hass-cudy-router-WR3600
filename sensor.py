@@ -200,6 +200,12 @@ SENSOR_TYPES = {
         icon="mdi:upload",
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    ("devices", "connected_devices"): CudyRouterSensorEntityDescription(
+        key="connected_devices",
+        module="devices",
+        name_suffix="connected devices",
+        icon="mdi:devices",
+    ),
 }
 
 
@@ -296,6 +302,18 @@ async def async_setup_entry(
     entities.append(
         CudyRouterSignalSensor(coordinator, name, "network", NETWORK_SENSOR)
     )
+    
+    # Add the connected devices sensor
+    connected_devices_description = SENSOR_TYPES.get(("devices", "connected_devices"))
+    if connected_devices_description:
+        entities.append(
+            CudyRouterConnectedDevicesSensor(
+                coordinator,
+                name,
+                "connected_devices",
+                connected_devices_description,
+            )
+        )
     options = config_entry.options
     device_list = [
         x.strip()
@@ -513,3 +531,35 @@ class CudyRouterPresenceSensor(CudyRouterDeviceSensor):
         if state == "not_home":
             return "mdi:account-off"
         return self.entity_description.icon
+
+
+class CudyRouterConnectedDevicesSensor(CudyRouterSensor):
+    """Sensor that provides a list of all connected devices with their details."""
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the count of connected devices."""
+        if not self.coordinator.data:
+            return 0
+        
+        devices_data = self.coordinator.data.get(MODULE_DEVICES, {})
+        device_count_data = devices_data.get("device_count", {})
+        return device_count_data.get("value", 0)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return all connected devices as attributes."""
+        if not self.coordinator.data:
+            return {}
+
+        devices_data = self.coordinator.data.get(MODULE_DEVICES, {})
+        connected_devices_data = devices_data.get("connected_devices", {})
+        
+        # Get the formatted device list from the parser
+        all_devices = connected_devices_data.get("all_devices", [])
+
+        return {
+            "devices": all_devices,
+            "device_count": len(all_devices),
+            "last_updated": datetime.now().isoformat(),
+        }
