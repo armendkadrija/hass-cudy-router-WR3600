@@ -227,7 +227,14 @@ def parse_devices(input_html: str, device_list_str: str, previous_devices: dict[
         all_devices_formatted.append(device_info)
     
     # Store the formatted device list for the connected devices sensor
-    data["connected_devices"] = {"value": len(devices), "all_devices": all_devices_formatted}
+    data["connected_devices"] = {
+        "value": len(devices), 
+        "attributes": {
+            "devices": all_devices_formatted,
+            "device_count": len(devices),
+            "last_updated": datetime.now().isoformat(),
+        }
+    }
     
     if devices:
         top_download_device = max(devices, key=lambda item: item.get("down_speed"))

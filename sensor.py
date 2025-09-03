@@ -543,23 +543,5 @@ class CudyRouterConnectedDevicesSensor(CudyRouterSensor):
             return 0
         
         devices_data = self.coordinator.data.get(MODULE_DEVICES, {})
-        device_count_data = devices_data.get("device_count", {})
-        return device_count_data.get("value", 0)
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        """Return all connected devices as attributes."""
-        if not self.coordinator.data:
-            return {}
-
-        devices_data = self.coordinator.data.get(MODULE_DEVICES, {})
         connected_devices_data = devices_data.get("connected_devices", {})
-        
-        # Get the formatted device list from the parser
-        all_devices = connected_devices_data.get("all_devices", [])
-
-        return {
-            "devices": all_devices,
-            "device_count": len(all_devices),
-            "last_updated": datetime.now().isoformat(),
-        }
+        return connected_devices_data.get("value", 0)
