@@ -211,6 +211,20 @@ def parse_devices(input_html: str, device_list_str: str, previous_devices: dict[
     devices = get_all_devices(input_html)
     data = {"device_count": {"value": len(devices)}}
     
+    # Sort devices by online time (newest first = shortest time first)
+    def time_to_minutes(time_str):
+        if not time_str or time_str == "---":
+            return 999999
+        try:
+            parts = time_str.split(":")
+            if len(parts) >= 2:
+                return int(parts[0]) * 60 + int(parts[1])
+        except (ValueError, IndexError):
+            pass
+        return 999999
+    
+    devices.sort(key=lambda d: time_to_minutes(d.get("online", "---")))
+    
     # Store all devices for the connected devices sensor
     all_devices_formatted = []
     for device in devices:
